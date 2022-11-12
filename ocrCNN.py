@@ -23,7 +23,13 @@ MODEL_NAME = 'OCR_CNN_MODEL.pth'
 SAVE_PATH = MODEL_PATH / MODEL_NAME
 
 # Device agnostic code >> sets 'device' to GPU if nVIDIA GPU is available, otherwise it is set to CPU
-device =  'cuda' if torch.cuda.is_available() else 'cpu'
+device = ''
+if torch.cuda.is_available():
+    device = 'cuda'
+elif torch.backends.mps.is_available():
+    device = 'mps'
+else:
+    device = 'cpu'
 
 # Download EMNIST handritten datasets for training and testing (28x28 resolution)
 train_data = datasets.EMNIST(root='data', train=True, download=True, transform=ToTensor(), split='letters')
@@ -105,7 +111,7 @@ class ocrModel(nn.Module):
 # Instantiate the character recogntion model >> 1 input channel, 10 neurons/hidden layer, num of classes
 if Path.exists(SAVE_PATH):
     model0 = ocrModel(1, 10, len(train_data.classes))
-    model0.load_state_dict(state_dict=torch.load(SAVE_PATH))
+    model0.load_state_dict(state_dict=torch.load(SAVE_PATH, map_location='cpu'))
     model0.to(device)
     print('Model Loaded')
 else:
@@ -168,11 +174,11 @@ def evaluate(sample, model, device):
         predList = []
         truth = []
         for image, label in random.sample(list(sample), k=10):
-            truth.append(label)
+            truth.append(chr(96+label))
             image = torch.unsqueeze(torch.Tensor(image), dim=0).to(device)
             predlogits = model(image)
             pred = torch.softmax(predlogits.squeeze(), dim=0).argmax()
-            predList.append(pred.cpu().item())
+            predList.append(chr(96+pred.cpu().item()))
         print(f"Truth: {truth}, Guess: {predList}")
 
 
