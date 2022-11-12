@@ -13,6 +13,15 @@ from torchvision.transforms import ToTensor
 import matplotlib.pyplot as plt
 import random
 
+from pathlib import Path
+
+
+MODEL_PATH = Path('models')
+MODEL_PATH.mkdir(parents=True, exist_ok=True)
+
+MODEL_NAME = 'OCR_CNN_MODEL.pth'
+SAVE_PATH = MODEL_PATH / MODEL_NAME
+
 # Device agnostic code >> sets 'device' to GPU if nVIDIA GPU is available, otherwise it is set to CPU
 device =  'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -21,15 +30,15 @@ train_data = datasets.EMNIST(root='data', train=True, download=True, transform=T
 test_data = datasets.EMNIST(root='data', train=False, download=True, transform=ToTensor(), split='letters')
 
 # Test to see if the dataset is downloaded and accessible
-image, label = train_data[0]
-plt.imshow(image.squeeze(), cmap='gray')
-plt.title(chr(96+label))
-plt.show()
+#image, label = train_data[0]
+#plt.imshow(image.squeeze(), cmap='gray')
+#plt.title(chr(96+label))
+#plt.show()
 
 ########## HYPERPARAMETERS ############
 
-batchSize = 64
-epochs = 2
+batchSize = 32
+epochs = 1
 learningRate = 0.1
 
 #######################################
@@ -42,10 +51,10 @@ test_dataloader = DataLoader(test_data, batch_size=batchSize, shuffle=False)
 # character recognition CNN class
 class ocrModel(nn.Module):
 
-    def __init__(self, inputShape, hiddenUnits, outputShape): # 3 arguments: 
-                                                              # inputShape == number of channels, 
-                                                              # hiddenUnits == # of neurons in hidden layer,
-                                                              # outputShape == # of classes
+    def __init__(self, inputShape, hiddenUnits, outputShape):   # 3 arguments: 
+                                                                # inputShape == number of channels, 
+                                                                # hiddenUnits == # of neurons in hidden layer,
+                                                                # outputShape == # of classes
         super().__init__()
         self.layers1 = nn.Sequential(               # Model consists of 3 nn.Sequentials. First 2 are Convolutional Layers
             nn.Conv2d(                              # 3rd nn.Sequential is a classifier layer that uses nn.Flatten and a nn.Linear for output
@@ -78,7 +87,7 @@ class ocrModel(nn.Module):
                 stride=1, 
                 padding=1),
             nn.ReLU(), 
-            nn.MaxPool2d(kernel_size=2, stride=2))
+            nn.MaxPool2d(2))
         self.classifiers = nn.Sequential(
             nn.Flatten(),
             nn.Linear(
@@ -95,8 +104,13 @@ class ocrModel(nn.Module):
 
 
 # Instantiate the character recogntion model >> 1 input channel, 10 neurons/hidden layer, num of classes
-model0 = ocrModel(1, 10, len(train_data.classes))
-model0.to(device)   # Send model to device
+if Path.exists(SAVE_PATH):
+    model0 = ocrModel(1, 10, len(train_data.classes))
+    model0.load_state_dict(state_dict=torch.load(SAVE_PATH))
+    model0.to(device)
+else:
+    model0 = ocrModel(1, 10, len(train_data.classes))
+    model0.to(device)   # Send model to device
 
 # Create loss function and optimizer (I could be wrong, but CrossEntropyLoss and SGD are pretty much standard and are not changed)
 loss_fn = nn.CrossEntropyLoss()
@@ -109,11 +123,9 @@ def accuracy_fn(y_true, y_pred):
     return acc
 
 
-def train(dataloader, model, accuracy_fn, loss_fn, optimizer, device):
+def train(dataloader, model, loss_fn, optimizer, device):
 
-    train_loss, train_accuracy = 0, 0
-
-    for batch, (X, Y) in enumerate(train_dataloader):
+    for batch, (X, Y) in enumerate(dataloader):
 
         X, Y = X.to(device), Y.to(device)
 
@@ -122,19 +134,12 @@ def train(dataloader, model, accuracy_fn, loss_fn, optimizer, device):
         train_pred = model(X)
 
         loss = loss_fn(train_pred, Y)
-        train_loss += loss
-        train_accuracy += accuracy_fn(Y, train_pred.argmax(dim=1))
 
         optimizer.zero_grad()
 
         loss.backward()
 
         optimizer.step()
-
-    train_loss /= len(dataloader)
-    train_accuracy /= len(dataloader)
-    
-    print(f"Train loss: {train_loss:.5f} | Train accuracy: {train_accuracy:.2f}%")
 
 
 def test(dataloader, model, accuracy_fn, loss_fn, device):
@@ -155,7 +160,7 @@ def test(dataloader, model, accuracy_fn, loss_fn, device):
         test_loss /= len(dataloader)
         test_accuracy /= len(dataloader)
 
-    print(f"\nTest loss:  {test_loss:.5f} | Test accuracy:  {test_accuracy:.2f}%\n")
+    print(f"Test loss:  {test_loss:.5f} | Test accuracy:  {test_accuracy:.2f}%\n")
 
 def evaluate(sample, model, device):
     with torch.inference_mode():
@@ -167,12 +172,14 @@ def evaluate(sample, model, device):
             image = torch.unsqueeze(torch.Tensor(image), dim=0).to(device)
             predlogits = model(image)
             pred = torch.softmax(predlogits.squeeze(), dim=0).argmax()
-            predList.append(pred.cpu())
-        print(f"Truth: {truth[:3]}, Guess: {predList[:3]}")
+            predList.append(pred.cpu().item())
+        print(f"Truth: {truth}, Guess: {predList}")
 
 
 for epoch in tqdm(range(epochs)):
     print(f"\n\nTrain Epoch: {epoch+1}\n----------")
-    train(train_dataloader, model0, accuracy_fn, loss_fn, optimizer, device)
+    train(train_dataloader, model0, loss_fn, optimizer, device)
     test(test_dataloader, model0, accuracy_fn, loss_fn, device)
 evaluate(test_data, model0, device)
+
+torch.save(obj=model0.state_dict(), f=SAVE_PATH)
