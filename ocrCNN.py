@@ -36,10 +36,9 @@ test_data = datasets.EMNIST(root='data', train=False, download=True, transform=T
 #plt.show()
 
 ########## HYPERPARAMETERS ############
-
 batchSize = 32
-epochs = 10
-learningRate = 0.1
+epochs = 100
+learningRate = 0.07
 
 #######################################
 
@@ -179,7 +178,7 @@ def evaluate(sample, model, device):
 
 for epoch in tqdm(range(epochs)):
     print(f"\n\nTrain Epoch: {epoch+1}\n----------")
-    #train(train_dataloader, model0, loss_fn, optimizer, device)
+    train(train_dataloader, model0, loss_fn, optimizer, device)
     test(test_dataloader, model0, accuracy_fn, loss_fn, device)
 evaluate(test_data, model0, device)
 
