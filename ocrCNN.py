@@ -38,7 +38,7 @@ test_data = datasets.EMNIST(root='data', train=False, download=True, transform=T
 ########## HYPERPARAMETERS ############
 
 batchSize = 32
-epochs = 1
+epochs = 10
 learningRate = 0.1
 
 #######################################
@@ -108,6 +108,7 @@ if Path.exists(SAVE_PATH):
     model0 = ocrModel(1, 10, len(train_data.classes))
     model0.load_state_dict(state_dict=torch.load(SAVE_PATH))
     model0.to(device)
+    print('Model Loaded')
 else:
     model0 = ocrModel(1, 10, len(train_data.classes))
     model0.to(device)   # Send model to device
@@ -178,8 +179,9 @@ def evaluate(sample, model, device):
 
 for epoch in tqdm(range(epochs)):
     print(f"\n\nTrain Epoch: {epoch+1}\n----------")
-    train(train_dataloader, model0, loss_fn, optimizer, device)
+    #train(train_dataloader, model0, loss_fn, optimizer, device)
     test(test_dataloader, model0, accuracy_fn, loss_fn, device)
 evaluate(test_data, model0, device)
 
 torch.save(obj=model0.state_dict(), f=SAVE_PATH)
+print('\nModel Saved')
