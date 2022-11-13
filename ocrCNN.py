@@ -8,7 +8,7 @@ from tqdm.auto import tqdm
 
 import torchvision
 from torchvision import datasets
-from torchvision.transforms import ToTensor
+from torchvision import transforms
 
 import matplotlib.pyplot as plt
 import random
@@ -32,11 +32,12 @@ else:
     device = 'cpu'
 
 # Download EMNIST handritten datasets for training and testing (28x28 resolution)
-train_data = datasets.EMNIST(root='data', train=True, download=True, transform=ToTensor(), split='letters')
-test_data = datasets.EMNIST(root='data', train=False, download=True, transform=ToTensor(), split='letters')
+transformations = transforms.Compose([transforms.RandomRotation(degrees=(270,270)), transforms.RandomHorizontalFlip(p=1), transforms.ToTensor()])
+train_data = datasets.EMNIST(root='data', train=True, download=True, transform=transformations, split='letters')
+test_data = datasets.EMNIST(root='data', train=False, download=True, transform=transformations, split='letters')
 
 # Test to see if the dataset is downloaded and accessible
-#image, label = train_data[0]
+#image, label = train_data[89]
 #plt.imshow(image.squeeze(), cmap='gray')
 #plt.title(chr(96+label))
 #plt.show()
