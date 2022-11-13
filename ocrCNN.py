@@ -44,8 +44,8 @@ test_data = datasets.EMNIST(root='data', train=False, download=True, transform=t
 
 ########## HYPERPARAMETERS ############
 batchSize = 32
-epochs = 10
-learningRate = 0.1
+epochs = 30
+learningRate = 0.001
 
 #######################################
 
