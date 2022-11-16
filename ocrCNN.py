@@ -31,7 +31,7 @@ elif torch.backends.mps.is_available():
 else:
     device = 'cpu'
 
-# Download EMNIST handritten datasets for training and testing (28x28 resolution)
+# Download EMNIST handwritten datasets for training and testing (28x28 resolution)
 transformations = transforms.Compose([transforms.RandomRotation(degrees=(270,270)), transforms.RandomHorizontalFlip(p=1), transforms.ToTensor()])
 train_data = datasets.EMNIST(root='data', train=True, download=True, transform=transformations, split='letters')
 test_data = datasets.EMNIST(root='data', train=False, download=True, transform=transformations, split='letters')
@@ -44,7 +44,7 @@ test_data = datasets.EMNIST(root='data', train=False, download=True, transform=t
 
 ########## HYPERPARAMETERS ############
 batchSize = 32
-epochs = 30
+epochs = 1
 learningRate = 0.0001
 
 #######################################
