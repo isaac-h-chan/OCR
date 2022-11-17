@@ -1,2 +1,5 @@
 /.venv
 /data
+/archive
+test.py
+
