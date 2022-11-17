@@ -43,8 +43,8 @@ test_data = datasets.EMNIST(root='data', train=False, download=True, transform=t
 #plt.show()
 
 ########## HYPERPARAMETERS ############
-batchSize = 32
-epochs = 1
+batchSize = 20000
+epochs = 10
 learningRate = 0.0001
 
 #######################################
