@@ -37,7 +37,8 @@ train_data = datasets.EMNIST(root='data', train=True, download=True, transform=t
 test_data = datasets.EMNIST(root='data', train=False, download=True, transform=transformations, split='letters')
 
 # Test to see if the dataset is downloaded and accessible
-#image, label = train_data[89]
+image, label = train_data[89]
+print(image.dtype)
 #plt.imshow(image.squeeze(), cmap='gray')
 #plt.title(chr(96+label))
 #plt.show()
@@ -114,6 +115,7 @@ if Path.exists(SAVE_PATH):
     model0 = ocrModel(1, 10, len(train_data.classes))
     model0.load_state_dict(state_dict=torch.load(SAVE_PATH, map_location='cpu'))
     model0.to(device)
+
     print('Model Loaded')
 else:
     model0 = ocrModel(1, 10, len(train_data.classes))
@@ -182,12 +184,17 @@ def evaluate(sample, model, device):
             predList.append(chr(96+pred.cpu().item()))
         print(f"Truth: {truth}, Guess: {predList}")
 
+def predict(img, model):
+    model.eval()
+    predLogits = model(img)
+    pred = torch.softmax(predLogits.squeeze(), dim=0).argmax()
+    return chr(96+pred.item())
 
-for epoch in tqdm(range(epochs)):
+''' for epoch in tqdm(range(epochs)):
     print(f"\n\nTrain Epoch: {epoch+1}\n----------")
     train(train_dataloader, model0, loss_fn, optimizer, device)
     test(test_dataloader, model0, accuracy_fn, loss_fn, device)
-evaluate(test_data, model0, device)
+evaluate(test_data, model0, device) '''
 
 torch.save(obj=model0.state_dict(), f=SAVE_PATH)
 print('\nModel Saved')

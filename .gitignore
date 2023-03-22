@@ -1,5 +1,5 @@
 /.venv
 /data
 /archive
+/.ipynb_checkpoints
 test.py
-
